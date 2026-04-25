@@ -19,7 +19,7 @@
 ## Быстрый старт
 
 ```bash
-npm i -g ticktick-cli
+npm i -g @polza-ai/ticktick-cli
 
 ticktick init                          # OAuth-авторизация через браузер
 ticktick tasks                         # все задачи

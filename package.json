@@ -1,8 +1,13 @@
 {
-  "name": "ticktick-cli",
+  "name": "@polza-ai/ticktick-cli",
   "version": "0.1.0",
   "description": "CLI tool for TickTick — for humans and AI agents",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/polza-ai/ticktick-cli.git"
+  },
+  "keywords": ["ticktick", "cli", "ai", "agent", "task-manager", "todo"],
   "type": "module",
   "bin": {
     "ticktick": "dist/bin/ticktick.js"
