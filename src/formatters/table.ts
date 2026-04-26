@@ -50,7 +50,7 @@ export function formatTaskList(tasks: Task[], projects?: Project[]): string {
       chalk.bold('Название'),
       chalk.bold('Дедлайн'),
     ],
-    colWidths: [12, 12, 16, 42, 14],
+    colWidths: [12, 12, 22, 38, 14],
     wordWrap: true,
   });
 
