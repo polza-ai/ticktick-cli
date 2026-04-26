@@ -4,7 +4,7 @@ import { stdin, stdout } from 'node:process';
 import open from 'open';
 import { saveGlobalConfig, saveProjectConfig, GLOBAL_CONFIG_PATH } from '../config/config.js';
 import type { GlobalConfig } from '../config/config.schema.js';
-import { buildAuthUrl, exchangeCode, waitForAuthCode } from '../config/auth.js';
+import { buildAuthUrl, exchangeCode, waitForAuthCode, DEFAULT_CLIENT_ID, DEFAULT_CLIENT_SECRET } from '../config/auth.js';
 import { TickTickClient } from '../client/ticktick-client.js';
 
 async function prompt(rl: ReturnType<typeof createInterface>, question: string, defaultValue?: string): Promise<string> {
@@ -17,6 +17,7 @@ export function registerInitCommand(program: Command): void {
   program
     .command('init')
     .description('Настроить подключение к TickTick')
+    .option('--custom-app', 'Использовать своё OAuth-приложение (вместо встроенного)')
     .option('--project', 'Создать также конфиг проекта (.ticktick.json)')
     .action(async (opts) => {
       const rl = createInterface({ input: stdin, output: stdout });
@@ -26,29 +27,33 @@ export function registerInitCommand(program: Command): void {
         console.log('🔧 Настройка TickTick CLI');
         console.log('─'.repeat(40));
 
-        // Step 1: Client credentials
-        console.log('');
-        console.log('Шаг 1. Приложение OAuth');
-        console.log('');
-        console.log('  Зарегистрируйте приложение на https://developer.ticktick.com/manage');
-        console.log('  Redirect URL: http://localhost:18321/callback');
-        console.log('');
+        let clientId = DEFAULT_CLIENT_ID;
+        let clientSecret = DEFAULT_CLIENT_SECRET;
 
-        const clientId = await prompt(rl, 'Client ID');
-        if (!clientId) {
-          console.error('\n❌ Client ID обязателен.\n');
-          process.exit(1);
+        if (opts.customApp) {
+          console.log('');
+          console.log('Своё OAuth-приложение');
+          console.log('');
+          console.log('  Зарегистрируйте приложение на https://developer.ticktick.com/manage');
+          console.log('  Redirect URL: http://localhost:18321/callback');
+          console.log('');
+
+          clientId = await prompt(rl, 'Client ID');
+          if (!clientId) {
+            console.error('\n❌ Client ID обязателен.\n');
+            process.exit(1);
+          }
+
+          clientSecret = await prompt(rl, 'Client Secret');
+          if (!clientSecret) {
+            console.error('\n❌ Client Secret обязателен.\n');
+            process.exit(1);
+          }
         }
 
-        const clientSecret = await prompt(rl, 'Client Secret');
-        if (!clientSecret) {
-          console.error('\n❌ Client Secret обязателен.\n');
-          process.exit(1);
-        }
-
-        // Step 2: OAuth flow
+        // OAuth flow
         console.log('');
-        console.log('Шаг 2. Авторизация');
+        console.log('Шаг 1. Авторизация');
         console.log('');
         console.log('  Открываю браузер для авторизации...');
         console.log('');
@@ -75,14 +80,14 @@ export function registerInitCommand(program: Command): void {
           }
         }
 
-        // Step 3: Exchange code for token
-        console.log('Шаг 3. Получение токена...');
+        // Exchange code for token
+        console.log('Шаг 2. Получение токена...');
         console.log('');
 
         const tokenResp = await exchangeCode(clientId, clientSecret, code);
 
-        // Step 4: Verify
-        console.log('Шаг 4. Проверка подключения...');
+        // Verify
+        console.log('Шаг 3. Проверка подключения...');
         console.log('');
 
         const client = new TickTickClient({ accessToken: tokenResp.access_token });

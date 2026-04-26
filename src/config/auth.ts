@@ -6,6 +6,9 @@ const TOKEN_URL = 'https://ticktick.com/oauth/token';
 const REDIRECT_URI = 'http://localhost:18321/callback';
 const SCOPE = 'tasks:read tasks:write';
 
+export const DEFAULT_CLIENT_ID = 'VP45HyK4Fh9ZSYyoci';
+export const DEFAULT_CLIENT_SECRET = 'r7fgF029QSRMuHrLpTqZb9yX8FaamV68';
+
 export function buildAuthUrl(clientId: string): string {
   const params = new URLSearchParams({
     client_id: clientId,

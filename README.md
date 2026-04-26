@@ -58,18 +58,13 @@ ticktick complete <id>                 # завершить задачу
 
 ## Настройка
 
-### 1. Создайте OAuth-приложение
-
-Зайдите на [developer.ticktick.com/manage](https://developer.ticktick.com/manage) и создайте приложение:
-- **Redirect URL**: `http://localhost:18321/callback`
-
-### 2. Запустите init
-
 ```bash
 ticktick init
 ```
 
-Вам понадобятся **Client ID** и **Client Secret** — CLI откроет браузер для авторизации автоматически.
+CLI откроет браузер — нажмите «Разрешить», и всё готово. OAuth-приложение встроено, ничего регистрировать не нужно.
+
+> Если хотите использовать своё приложение: `ticktick init --custom-app`
 
 ## Конфигурация
 
@@ -108,11 +103,12 @@ ticktick init
 ### init
 
 ```
-ticktick init [--project]
+ticktick init [--custom-app] [--project]
 ```
 
 | Флаг | Описание |
 |------|----------|
+| `--custom-app` | Использовать своё OAuth-приложение (вместо встроенного) |
 | `--project` | Создать `.ticktick.json` в текущей директории |
 
 ### tasks
@@ -240,7 +236,7 @@ npm test                       # тесты (Vitest)
 ## Требования
 
 - **Node.js** 20+
-- **OAuth-приложение** на [developer.ticktick.com](https://developer.ticktick.com/manage)
+- **Аккаунт TickTick**
 
 ## Лицензия
 
