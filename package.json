@@ -5,9 +5,16 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/polza-ai/ticktick-cli.git"
+    "url": "git+https://github.com/polza-ai/ticktick-cli.git"
   },
-  "keywords": ["ticktick", "cli", "ai", "agent", "task-manager", "todo"],
+  "keywords": [
+    "ticktick",
+    "cli",
+    "ai",
+    "agent",
+    "task-manager",
+    "todo"
+  ],
   "type": "module",
   "bin": {
     "ticktick": "dist/bin/ticktick.js"
