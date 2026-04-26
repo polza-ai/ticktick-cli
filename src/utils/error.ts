@@ -11,6 +11,14 @@ export class TickTickCliError extends Error {
   }
 }
 
+export function notFoundError(resource: string, id: string): TickTickCliError {
+  return new TickTickCliError(`${resource} ${id} не найден(а).`, 'NOT_FOUND', 3);
+}
+
+export function validationError(message: string): TickTickCliError {
+  return new TickTickCliError(message, 'VALIDATION_ERROR', 4);
+}
+
 export function handleApiError(error: unknown): never {
   if (error instanceof TickTickCliError) throw error;
 

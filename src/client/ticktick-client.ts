@@ -1,7 +1,26 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios';
 import type {
-  Task, Project, ProjectData, CreateTaskParams,
+  Task, Project, ProjectData, CreateTaskParams, UpdateTaskParams,
+  MoveTaskOperation, MoveTaskResult, CompletedTasksParams, FilterTasksParams,
+  CreateProjectParams, UpdateProjectParams,
+  Focus, FocusType,
+  Habit, CreateHabitParams, UpdateHabitParams,
+  HabitCheckin, HabitCheckinInput,
 } from './types.js';
+import { notFoundError } from '../utils/error.js';
+
+// TickTick Open API часто отвечает 200 + пустым телом для несуществующих ID.
+// Считаем ресурс отсутствующим, если в теле нет id (или вообще нет тела).
+function assertResource<T extends { id?: string }>(
+  data: T | null | undefined | string,
+  resource: string,
+  id: string,
+): T {
+  if (!data || typeof data === 'string' || !data.id) {
+    throw notFoundError(resource, id);
+  }
+  return data;
+}
 
 export interface TickTickClientConfig {
   accessToken: string;
@@ -53,7 +72,7 @@ export class TickTickClient {
     });
   }
 
-  // Projects (documented in official API)
+  // ===== Projects =====
 
   async getProjects(): Promise<Project[]> {
     const { data } = await this.http.get<Project[]>('/project');
@@ -62,18 +81,45 @@ export class TickTickClient {
 
   async getProject(projectId: string): Promise<Project> {
     const { data } = await this.http.get<Project>(`/project/${projectId}`);
-    return data;
+    return assertResource(data, 'Проект', projectId);
   }
 
   async getProjectData(projectId: string): Promise<ProjectData> {
     const { data } = await this.http.get<ProjectData>(`/project/${projectId}/data`);
+    if (!data?.project?.id) {
+      throw notFoundError('Проект', projectId);
+    }
     return data;
   }
 
-  // Tasks (documented in official API)
+  async createProject(params: CreateProjectParams): Promise<Project> {
+    const { data } = await this.http.post<Project>('/project', params);
+    return data;
+  }
+
+  async updateProject(projectId: string, params: UpdateProjectParams): Promise<Project> {
+    const { data } = await this.http.post<Project>(`/project/${projectId}`, params);
+    return data;
+  }
+
+  async deleteProject(projectId: string): Promise<void> {
+    await this.http.delete(`/project/${projectId}`);
+  }
+
+  // ===== Tasks =====
+
+  async getTask(projectId: string, taskId: string): Promise<Task> {
+    const { data } = await this.http.get<Task>(`/project/${projectId}/task/${taskId}`);
+    return assertResource(data, 'Задача', taskId);
+  }
 
   async createTask(params: CreateTaskParams): Promise<Task> {
     const { data } = await this.http.post<Task>('/task', params);
+    return data;
+  }
+
+  async updateTask(taskId: string, params: UpdateTaskParams): Promise<Task> {
+    const { data } = await this.http.post<Task>(`/task/${taskId}`, params);
     return data;
   }
 
@@ -85,7 +131,73 @@ export class TickTickClient {
     await this.http.delete(`/project/${projectId}/task/${taskId}`);
   }
 
-  // Helpers — built on top of documented endpoints
+  async moveTasks(operations: MoveTaskOperation[]): Promise<MoveTaskResult[]> {
+    const { data } = await this.http.post<MoveTaskResult[]>('/task/move', operations);
+    return data;
+  }
+
+  async getCompletedTasks(params: CompletedTasksParams = {}): Promise<Task[]> {
+    const { data } = await this.http.post<Task[]>('/task/completed', params);
+    return data;
+  }
+
+  async filterTasks(params: FilterTasksParams = {}): Promise<Task[]> {
+    const { data } = await this.http.post<Task[]>('/task/filter', params);
+    return data;
+  }
+
+  // ===== Focus =====
+
+  async getFocus(focusId: string, type: FocusType): Promise<Focus> {
+    const { data } = await this.http.get<Focus>(`/focus/${focusId}`, { params: { type } });
+    return assertResource(data, 'Фокус-сессия', focusId);
+  }
+
+  async getFocuses(from: string, to: string, type: FocusType): Promise<Focus[]> {
+    const { data } = await this.http.get<Focus[]>('/focus', { params: { from, to, type } });
+    return data;
+  }
+
+  async deleteFocus(focusId: string, type: FocusType): Promise<Focus> {
+    const { data } = await this.http.delete<Focus>(`/focus/${focusId}`, { params: { type } });
+    return data;
+  }
+
+  // ===== Habits =====
+
+  async getHabits(): Promise<Habit[]> {
+    const { data } = await this.http.get<Habit[]>('/habit');
+    return data;
+  }
+
+  async getHabit(habitId: string): Promise<Habit> {
+    const { data } = await this.http.get<Habit>(`/habit/${habitId}`);
+    return assertResource(data, 'Привычка', habitId);
+  }
+
+  async createHabit(params: CreateHabitParams): Promise<Habit> {
+    const { data } = await this.http.post<Habit>('/habit', params);
+    return data;
+  }
+
+  async updateHabit(habitId: string, params: UpdateHabitParams): Promise<Habit> {
+    const { data } = await this.http.post<Habit>(`/habit/${habitId}`, params);
+    return data;
+  }
+
+  async checkinHabit(habitId: string, input: HabitCheckinInput): Promise<HabitCheckin> {
+    const { data } = await this.http.post<HabitCheckin>(`/habit/${habitId}/checkin`, input);
+    return data;
+  }
+
+  async getHabitCheckins(habitIds: string[], from: number, to: number): Promise<HabitCheckin[]> {
+    const { data } = await this.http.get<HabitCheckin[]>('/habit/checkins', {
+      params: { habitIds: habitIds.join(','), from, to },
+    });
+    return data;
+  }
+
+  // ===== Helpers — built on top of documented endpoints =====
 
   async getAllTasks(): Promise<{ tasks: Task[]; projects: Project[] }> {
     const projects = await this.getProjects();

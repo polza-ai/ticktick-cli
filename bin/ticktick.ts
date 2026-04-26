@@ -7,9 +7,27 @@ import { dirname, join } from 'node:path';
 import { registerInitCommand } from '../src/commands/init.js';
 import { registerTaskCommand, registerTasksCommand } from '../src/commands/tasks.js';
 import { registerCreateCommand } from '../src/commands/create.js';
+import { registerUpdateCommand } from '../src/commands/update.js';
 import { registerCompleteCommand } from '../src/commands/complete.js';
 import { registerDeleteCommand } from '../src/commands/delete.js';
+import { registerMoveCommand } from '../src/commands/move.js';
+import { registerCompletedCommand } from '../src/commands/completed.js';
 import { registerProjectCommand, registerProjectsCommand } from '../src/commands/projects.js';
+import {
+  registerProjectCreateCommand,
+  registerProjectUpdateCommand,
+  registerProjectDeleteCommand,
+} from '../src/commands/project-crud.js';
+import {
+  registerFocusCommand,
+  registerFocusesCommand,
+  registerFocusDeleteCommand,
+} from '../src/commands/focus.js';
+import {
+  registerHabitCommand, registerHabitsCommand,
+  registerHabitCreateCommand, registerHabitUpdateCommand,
+  registerHabitCheckinCommand, registerHabitCheckinsCommand,
+} from '../src/commands/habit.js';
 import { formatError } from '../src/utils/error.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,13 +47,36 @@ program
   .version(pkg.version);
 
 registerInitCommand(program);
+
+// Tasks
 registerTasksCommand(program);
 registerTaskCommand(program);
 registerCreateCommand(program);
+registerUpdateCommand(program);
 registerCompleteCommand(program);
 registerDeleteCommand(program);
+registerMoveCommand(program);
+registerCompletedCommand(program);
+
+// Projects
 registerProjectsCommand(program);
 registerProjectCommand(program);
+registerProjectCreateCommand(program);
+registerProjectUpdateCommand(program);
+registerProjectDeleteCommand(program);
+
+// Focus
+registerFocusesCommand(program);
+registerFocusCommand(program);
+registerFocusDeleteCommand(program);
+
+// Habits
+registerHabitsCommand(program);
+registerHabitCommand(program);
+registerHabitCreateCommand(program);
+registerHabitUpdateCommand(program);
+registerHabitCheckinCommand(program);
+registerHabitCheckinsCommand(program);
 
 program.hook('postAction', () => {});
 

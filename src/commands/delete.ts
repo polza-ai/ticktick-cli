@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { loadConfig, createClient } from '../config/config.js';
-import { handleApiError } from '../utils/error.js';
+import { handleApiError, notFoundError } from '../utils/error.js';
 import { jsonOutput } from '../formatters/json.js';
 
 export function registerDeleteCommand(program: Command): void {
@@ -21,10 +21,12 @@ export function registerDeleteCommand(program: Command): void {
         if (!projectId) {
           const found = await client.findTaskById(taskId);
           if (!found) {
-            console.error('Задача не найдена. Укажите --project <id>.');
-            process.exit(3);
+            throw notFoundError('Задача', taskId);
           }
           projectId = found.task.projectId;
+        } else {
+          // Pre-flight: API возвращает 200 на delete несуществующей задачи
+          await client.getTask(projectId, taskId);
         }
 
         if (!opts.yes && !opts.json) {

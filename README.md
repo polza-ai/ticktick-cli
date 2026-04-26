@@ -36,10 +36,25 @@ ticktick complete <id>                 # завершить задачу
 | `tasks` | Список задач с фильтрами | `ticktick tasks --priority 5` |
 | `task` | Детали задачи | `ticktick task <id>` |
 | `create` | Создать задачу | `ticktick create -t "Баг" --priority 5` |
+| `update` | Изменить задачу | `ticktick update <id> -t "..." -p 5` |
 | `complete` | Завершить задачу | `ticktick complete <id>` |
 | `delete` | Удалить задачу | `ticktick delete <id>` |
+| `move` | Переместить задачу в другой проект | `ticktick move <id> --to <projectId>` |
+| `completed` | Список завершённых задач | `ticktick completed --from 2026-01-01` |
 | `projects` | Список проектов | `ticktick projects` |
 | `project` | Проект с задачами | `ticktick project <id>` |
+| `project-create` | Создать проект | `ticktick project-create -n "Работа"` |
+| `project-update` | Изменить проект | `ticktick project-update <id> -n "..."` |
+| `project-delete` | Удалить проект | `ticktick project-delete <id>` |
+| `focuses` | Список фокус-сессий | `ticktick focuses --from ... --to ...` |
+| `focus` | Детали фокус-сессии | `ticktick focus <id>` |
+| `focus-delete` | Удалить фокус-сессию | `ticktick focus-delete <id>` |
+| `habits` | Список привычек | `ticktick habits` |
+| `habit` | Детали привычки | `ticktick habit <id>` |
+| `habit-create` | Создать привычку | `ticktick habit-create -n "Read" --type Boolean --repeat "RRULE:FREQ=DAILY;INTERVAL=1"` |
+| `habit-update` | Изменить привычку | `ticktick habit-update <id> -n "..." --goal 2` |
+| `habit-checkin` | Чек-ин привычки | `ticktick habit-checkin <id>` |
+| `habit-checkins` | Чек-ины за период | `ticktick habit-checkins --habits <id> --from 20260101 --to 20260501` |
 
 > Все команды поддерживают `--json` для машинного вывода.
 
@@ -134,6 +149,81 @@ ticktick create -t "Название" [опции]
 | `--tag <tags...>` | Теги |
 | `--json` | JSON-вывод |
 
+### update
+
+```
+ticktick update <taskId> [опции]
+```
+
+| Флаг | Описание |
+|------|----------|
+| `--project <id>` | ID проекта (если не указан — найдётся автоматически) |
+| `-t, --title <text>` | Новое название |
+| `--content <text>` | Описание |
+| `-p, --priority <n>` | Приоритет (0, 1, 3, 5) |
+| `--due <date>` | Дедлайн |
+| `--start <date>` | Дата начала |
+| `--all-day` | Без времени |
+| `--timezone <tz>` | Часовой пояс |
+| `--repeat <rrule>` | Правило повторения |
+| `--json` | JSON-вывод |
+
+### move
+
+```
+ticktick move <taskId> --to <projectId> [--from <projectId>] [--json]
+```
+
+### completed
+
+```
+ticktick completed [--project <ids...>] [--from <date>] [--to <date>] [-l <n>] [--json]
+```
+
+### project-create / project-update / project-delete
+
+```
+ticktick project-create -n "Название" [--color #F18181] [--view list|kanban|timeline] [--kind TASK|NOTE]
+ticktick project-update <id> [-n ...] [--color ...] [--view ...] [--kind ...]
+ticktick project-delete <id> [-y]
+```
+
+### focuses / focus / focus-delete
+
+```
+ticktick focuses --from <ISO> --to <ISO> [--type pomodoro|timing] [--json]
+ticktick focus <focusId> [--type pomodoro|timing] [--json]
+ticktick focus-delete <focusId> [--type pomodoro|timing] [-y]
+```
+
+> Диапазон не больше 30 дней. Если больше — сервер автоматически сдвигает `from`.
+
+### habits / habit / habit-create / habit-update
+
+```
+ticktick habits [--json]
+ticktick habit <habitId> [--json]
+
+ticktick habit-create -n "Read" [--icon habit_reading] [--color #4D8CF5] \
+  [--type Boolean] [--goal 1] [--step 1] [--unit Count] \
+  [--repeat "RRULE:FREQ=DAILY;INTERVAL=1"] [--record] \
+  [--target-days N] [--target-start YYYYMMDD] [--encouragement "..."]
+
+ticktick habit-update <habitId> [-n ...] [--goal ...] [--repeat ...] \
+  [--status <n>] [--target-days N] [--target-start YYYYMMDD]
+```
+
+> DELETE для привычек в API нет — для архивации используйте `habit-update <id> --status 1`.
+
+### habit-checkin / habit-checkins
+
+```
+ticktick habit-checkin <habitId> [--stamp YYYYMMDD] [--value 1.0] [--goal 1.0] [--status <n>] [--time ISO]
+ticktick habit-checkins --habits <id1> <id2> ... --from YYYYMMDD --to YYYYMMDD [--json]
+```
+
+> Без `--stamp` чек-ин делается на сегодня.
+
 ### complete
 
 ```
@@ -185,7 +275,7 @@ npm run typecheck              # проверка типов
 
 ## API
 
-CLI использует [официальный TickTick Open API](https://developer.ticktick.com/docs#/openapi) (6 эндпоинтов: проекты, задачи, создание, завершение, удаление).
+CLI покрывает 100% [официального TickTick Open API](https://developer.ticktick.com/docs#/openapi): задачи (CRUD, перемещение, фильтр, завершённые), проекты (CRUD), фокус-сессии (read/delete), привычки (CRUD без delete) и чек-ины.
 
 ## Требования
 

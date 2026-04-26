@@ -3,6 +3,7 @@ import { loadConfig, createClient } from '../config/config.js';
 import { handleApiError } from '../utils/error.js';
 import { jsonOutput } from '../formatters/json.js';
 import { formatTaskDetail } from '../formatters/table.js';
+import { parsePriority, normalizeDueDate } from '../utils/validate.js';
 
 export function registerCreateCommand(program: Command): void {
   program
@@ -21,12 +22,14 @@ export function registerCreateCommand(program: Command): void {
         const projectId = opts.project ?? config.defaultProject;
 
         const client = await createClient(config);
+        const priority = parsePriority(opts.priority) ?? config.defaultPriority;
+        const dueDate = normalizeDueDate(opts.due);
         const task = await client.createTask({
           title: opts.title,
           content: opts.content,
           projectId,
-          priority: opts.priority ? parseInt(opts.priority, 10) : config.defaultPriority,
-          dueDate: opts.due,
+          priority,
+          dueDate,
           tags: opts.tag ?? config.defaultTags,
         });
 

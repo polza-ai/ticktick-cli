@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import ora from 'ora';
 import { loadConfig, createClient } from '../config/config.js';
-import { handleApiError } from '../utils/error.js';
+import { handleApiError, notFoundError, TickTickCliError } from '../utils/error.js';
 import { jsonOutput } from '../formatters/json.js';
 import { formatTaskList, formatTaskDetail } from '../formatters/table.js';
 
@@ -100,20 +100,31 @@ export function registerTaskCommand(program: Command): void {
         let projectName: string | undefined;
 
         if (opts.project) {
-          const data = await client.getProjectData(opts.project);
-          task = data.tasks?.find(t => t.id === taskId);
-          projectName = data.project?.name;
-          if (!task) {
-            spinner?.stop();
-            console.error('Задача не найдена в этом проекте.');
-            process.exit(3);
+          try {
+            task = await client.getTask(opts.project, taskId);
+            try {
+              const project = await client.getProject(opts.project);
+              projectName = project.name;
+            } catch { /* best effort */ }
+          } catch (err) {
+            // shared-проекты иногда отдают пустое тело по прямому GET — fallback на полный поиск
+            if (err instanceof TickTickCliError && err.code === 'NOT_FOUND') {
+              const found = await client.findTaskById(taskId);
+              if (!found) {
+                spinner?.stop();
+                throw notFoundError('Задача', taskId);
+              }
+              task = found.task;
+              projectName = found.project.name;
+            } else {
+              throw err;
+            }
           }
         } else {
           const found = await client.findTaskById(taskId);
           if (!found) {
             spinner?.stop();
-            console.error('Задача не найдена. Попробуйте указать --project <id>.');
-            process.exit(3);
+            throw notFoundError('Задача', taskId);
           }
           task = found.task;
           projectName = found.project.name;
