@@ -51,31 +51,10 @@ export interface Column {
   sortOrder?: number;
 }
 
-export interface Tag {
-  name: string;
-  label?: string;
-  color?: string;
-  sortOrder?: number;
-  parent?: string;
-}
-
-export interface UserProfile {
-  username: string;
-  id?: string;
-  name?: string;
-  email?: string;
-}
-
 export interface ProjectData {
   project: Project;
   tasks: Task[];
   columns?: Column[];
-}
-
-export interface BatchCheckResponse {
-  syncTaskBean?: { update?: Task[] };
-  projectProfiles?: Project[];
-  tags?: Tag[];
 }
 
 export interface CreateTaskParams {
@@ -87,15 +66,4 @@ export interface CreateTaskParams {
   dueDate?: string;
   tags?: string[];
   items?: { title: string; status?: number }[];
-}
-
-export interface UpdateTaskParams {
-  title?: string;
-  content?: string;
-  projectId?: string;
-  priority?: number;
-  startDate?: string;
-  dueDate?: string;
-  tags?: string[];
-  items?: SubTask[];
 }

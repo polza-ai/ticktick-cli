@@ -60,7 +60,6 @@ export function registerInitCommand(program: Command): void {
 
         const authUrl = buildAuthUrl(clientId);
 
-        // Start waiting for callback before opening browser
         const codePromise = waitForAuthCode();
         await open(authUrl);
 
@@ -86,7 +85,7 @@ export function registerInitCommand(program: Command): void {
 
         const tokenResp = await exchangeCode(clientId, clientSecret, code);
 
-        // Verify
+        // Verify via getProjects (the only reliable endpoint)
         console.log('Шаг 3. Проверка подключения...');
         console.log('');
 
@@ -95,11 +94,9 @@ export function registerInitCommand(program: Command): void {
         let defaultProject = '';
 
         try {
-          const user = await client.getUserProfile();
-          console.log(`  ✅ Подключено! Вы: ${user.username}`);
-          console.log('');
-
           const projects = await client.getProjects();
+          console.log(`  ✅ Подключено! Найдено проектов: ${projects.length}`);
+          console.log('');
 
           if (projects.length > 0) {
             console.log('  Доступные проекты:');
@@ -120,7 +117,12 @@ export function registerInitCommand(program: Command): void {
           }
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          console.log('  ⚠️  Не удалось получить данные пользователя.');
+          if (msg.includes('401') || msg.includes('403')) {
+            console.error('  ❌ Не удалось подключиться. Проверьте авторизацию.');
+            console.error(`     ${msg}`);
+            process.exit(1);
+          }
+          console.log('  ⚠️  Не удалось получить список проектов.');
           console.log(`     ${msg}`);
           console.log('');
         }
@@ -145,7 +147,6 @@ export function registerInitCommand(program: Command): void {
         console.log('');
         console.log(`✅ Конфигурация сохранена в ${GLOBAL_CONFIG_PATH}`);
 
-        // Optional: project config
         if (opts.project) {
           console.log('');
           console.log('Настройка проекта (.ticktick.json)');

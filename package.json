@@ -1,6 +1,6 @@
 {
   "name": "@polza-ai/ticktick-cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "CLI tool for TickTick — for humans and AI agents",
   "license": "MIT",
   "repository": {

@@ -1,7 +1,6 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios';
 import type {
-  Task, Project, ProjectData, Tag, UserProfile,
-  BatchCheckResponse, CreateTaskParams, UpdateTaskParams,
+  Task, Project, ProjectData, CreateTaskParams,
 } from './types.js';
 
 export interface TickTickClientConfig {
@@ -54,14 +53,7 @@ export class TickTickClient {
     });
   }
 
-  // User
-
-  async getUserProfile(): Promise<UserProfile> {
-    const { data } = await this.http.get<UserProfile>('/user');
-    return data;
-  }
-
-  // Projects
+  // Projects (documented in official API)
 
   async getProjects(): Promise<Project[]> {
     const { data } = await this.http.get<Project[]>('/project');
@@ -78,20 +70,10 @@ export class TickTickClient {
     return data;
   }
 
-  // Tasks
-
-  async getTask(projectId: string, taskId: string): Promise<Task> {
-    const { data } = await this.http.get<Task>(`/project/${projectId}/task/${taskId}`);
-    return data;
-  }
+  // Tasks (documented in official API)
 
   async createTask(params: CreateTaskParams): Promise<Task> {
     const { data } = await this.http.post<Task>('/task', params);
-    return data;
-  }
-
-  async updateTask(projectId: string, taskId: string, params: UpdateTaskParams): Promise<Task> {
-    const { data } = await this.http.post<Task>(`/task/${taskId}`, { ...params, projectId });
     return data;
   }
 
@@ -103,44 +85,39 @@ export class TickTickClient {
     await this.http.delete(`/project/${projectId}/task/${taskId}`);
   }
 
-  // Tags
+  // Helpers — built on top of documented endpoints
 
-  async batchCreateTags(tags: { name: string; color?: string }[]): Promise<void> {
-    await this.http.post('/batch/tag', tags);
+  async getAllTasks(): Promise<{ tasks: Task[]; projects: Project[] }> {
+    const projects = await this.getProjects();
+    const allTasks: Task[] = [];
+
+    for (const project of projects) {
+      try {
+        const data = await this.getProjectData(project.id);
+        if (data.tasks) {
+          allTasks.push(...data.tasks);
+        }
+      } catch {
+        // project may have no tasks or access denied
+      }
+    }
+
+    return { tasks: allTasks, projects };
   }
 
-  async updateTag(oldName: string, newTag: { name: string; color?: string }): Promise<void> {
-    await this.http.put(`/tag/${oldName}`, newTag);
-  }
+  async findTaskById(taskId: string): Promise<{ task: Task; project: Project } | null> {
+    const projects = await this.getProjects();
 
-  async deleteTag(name: string): Promise<void> {
-    await this.http.delete(`/tag/${name}`);
-  }
+    for (const project of projects) {
+      try {
+        const data = await this.getProjectData(project.id);
+        const task = data.tasks?.find(t => t.id === taskId);
+        if (task) return { task, project };
+      } catch {
+        // skip
+      }
+    }
 
-  // Batch
-
-  async batchCheck(): Promise<BatchCheckResponse> {
-    const { data } = await this.http.get<BatchCheckResponse>('/batch/check/0');
-    return data;
-  }
-
-  // Helpers
-
-  async findTaskById(taskId: string): Promise<{ task: Task; projectId: string } | null> {
-    const batch = await this.batchCheck();
-    const tasks = batch.syncTaskBean?.update ?? [];
-    const task = tasks.find(t => t.id === taskId);
-    if (task) return { task, projectId: task.projectId };
     return null;
-  }
-
-  async getAllTasks(): Promise<Task[]> {
-    const batch = await this.batchCheck();
-    return batch.syncTaskBean?.update ?? [];
-  }
-
-  async getAllTags(): Promise<Tag[]> {
-    const batch = await this.batchCheck();
-    return batch.tags ?? [];
   }
 }

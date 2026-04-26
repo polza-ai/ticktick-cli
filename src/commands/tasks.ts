@@ -31,9 +31,9 @@ export function registerTasksCommand(program: Command): void {
           tasks = data.tasks ?? [];
           projects = [data.project];
         } else {
-          const batch = await client.batchCheck();
-          tasks = batch.syncTaskBean?.update ?? [];
-          projects = batch.projectProfiles ?? [];
+          const result = await client.getAllTasks();
+          tasks = result.tasks;
+          projects = result.projects;
         }
 
         // Filter by status
@@ -100,11 +100,14 @@ export function registerTaskCommand(program: Command): void {
         let projectName: string | undefined;
 
         if (opts.project) {
-          task = await client.getTask(opts.project, taskId);
-          try {
-            const projects = await client.getProjects();
-            projectName = projects.find(p => p.id === opts.project)?.name;
-          } catch { /* ignore */ }
+          const data = await client.getProjectData(opts.project);
+          task = data.tasks?.find(t => t.id === taskId);
+          projectName = data.project?.name;
+          if (!task) {
+            spinner?.stop();
+            console.error('Задача не найдена в этом проекте.');
+            process.exit(3);
+          }
         } else {
           const found = await client.findTaskById(taskId);
           if (!found) {
@@ -113,10 +116,7 @@ export function registerTaskCommand(program: Command): void {
             process.exit(3);
           }
           task = found.task;
-          try {
-            const projects = await client.getProjects();
-            projectName = projects.find(p => p.id === task!.projectId)?.name;
-          } catch { /* ignore */ }
+          projectName = found.project.name;
         }
 
         spinner?.stop();

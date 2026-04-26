@@ -5,6 +5,7 @@
 </p>
 
 <p align="center">
+  <a href="https://www.npmjs.com/package/@polza-ai/ticktick-cli"><img src="https://img.shields.io/npm/v/@polza-ai/ticktick-cli?color=blue" alt="npm version"></a>
   <img src="https://img.shields.io/badge/node-%3E%3D20-brightgreen" alt="node version">
   <img src="https://img.shields.io/badge/TypeScript-strict-blue?logo=typescript&logoColor=white" alt="TypeScript">
   <a href="https://github.com/polza-ai/ticktick-cli/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="license"></a>
@@ -14,14 +15,14 @@
 
 - **Для людей** — цветные таблицы, спиннеры, интерактивная настройка
 - **Для AI-агентов** — `--json` на каждой команде, стабильный формат `{ ok, data }`
-- **Полный цикл** — 11 команд: задачи, проекты, теги, подзадачи
+- **Встроенная авторизация** — OAuth-приложение встроено, `ticktick init` и всё работает
 
 ## Быстрый старт
 
 ```bash
 npm i -g @polza-ai/ticktick-cli
 
-ticktick init                          # OAuth-авторизация через браузер
+ticktick init                          # открывает браузер, нажали «Разрешить» — готово
 ticktick tasks                         # все задачи
 ticktick create -t "Купить молоко"     # создать задачу
 ticktick complete <id>                 # завершить задачу
@@ -32,29 +33,15 @@ ticktick complete <id>                 # завершить задачу
 | Команда | Описание | Пример |
 |---------|----------|--------|
 | `init` | Настроить подключение (OAuth 2.0) | `ticktick init` |
-| `tasks` | Список задач с фильтрами | `ticktick tasks --priority 5 --tag work` |
+| `tasks` | Список задач с фильтрами | `ticktick tasks --priority 5` |
 | `task` | Детали задачи | `ticktick task <id>` |
 | `create` | Создать задачу | `ticktick create -t "Баг" --priority 5` |
-| `update` | Обновить задачу | `ticktick update <id> -t "Новое"` |
 | `complete` | Завершить задачу | `ticktick complete <id>` |
 | `delete` | Удалить задачу | `ticktick delete <id>` |
 | `projects` | Список проектов | `ticktick projects` |
 | `project` | Проект с задачами | `ticktick project <id>` |
-| `tags` | Управление тегами | `ticktick tags create work` |
-| `checklist` | Подзадачи | `ticktick checklist <id> add "Тесты"` |
 
 > Все команды поддерживают `--json` для машинного вывода.
-
-## Интеграция с AI-агентами
-
-`ticktick` спроектирован как инструмент для AI-агентов: данные идут в stdout (JSON/таблица), логи и спиннеры — в stderr. Флаг `--json` возвращает стабильный конверт:
-
-```json
-{ "ok": true,  "data": { "id": "abc123", "title": "..." } }
-{ "ok": false, "error": { "code": "NOT_FOUND", "message": "Не найдено" } }
-```
-
-**Любой агент** — используйте `--json` и парсите `{ ok, data }` / `{ ok, error }`.
 
 ## Настройка
 
@@ -66,24 +53,20 @@ CLI откроет браузер — нажмите «Разрешить», и 
 
 > Если хотите использовать своё приложение: `ticktick init --custom-app`
 
+## Интеграция с AI-агентами
+
+`ticktick` спроектирован как инструмент для AI-агентов: данные идут в stdout (JSON/таблица), логи и спиннеры — в stderr. Флаг `--json` возвращает стабильный конверт:
+
+```json
+{ "ok": true,  "data": { "id": "abc123", "title": "..." } }
+{ "ok": false, "error": { "code": "NOT_FOUND", "message": "Не найдено" } }
+```
+
 ## Конфигурация
 
 ### Глобальный конфиг
 
-`~/.ticktick-cli/config.json` — создаётся через `ticktick init`:
-
-```json
-{
-  "clientId": "abc...",
-  "clientSecret": "xyz...",
-  "accessToken": "...",
-  "refreshToken": "...",
-  "defaultProject": "<project-id>",
-  "apiBaseUrl": "https://api.ticktick.com/open/v1"
-}
-```
-
-Токен обновляется автоматически при истечении через refresh_token.
+`~/.ticktick-cli/config.json` — создаётся через `ticktick init`. Токен обновляется автоматически через refresh_token.
 
 ### Проектный конфиг
 
@@ -151,22 +134,6 @@ ticktick create -t "Название" [опции]
 | `--tag <tags...>` | Теги |
 | `--json` | JSON-вывод |
 
-### update
-
-```
-ticktick update <taskId> [опции]
-```
-
-| Флаг | Описание |
-|------|----------|
-| `-t, --title <text>` | Новое название |
-| `--content <text>` | Новое описание |
-| `--project <id>` | ID проекта |
-| `-p, --priority <n>` | Новый приоритет |
-| `--due <date>` | Новый дедлайн |
-| `--tag <tags...>` | Теги |
-| `--json` | JSON-вывод |
-
 ### complete
 
 ```
@@ -199,22 +166,6 @@ ticktick project <id> [--json]
 
 Показывает проект и все его задачи.
 
-### tags
-
-```
-ticktick tags [action] [args...] [--json]
-```
-
-**Действия:** без аргументов — список, `create <name> [color]`, `rename <old> <new>`, `delete <name>`.
-
-### checklist
-
-```
-ticktick checklist <taskId> [action] [text] [--json]
-```
-
-**Действия:** без аргументов — показать, `add <text>` — добавить, `check <номер>` — отметить/снять.
-
 </details>
 
 <details>
@@ -228,10 +179,13 @@ npm install
 npm run dev -- tasks           # запуск через tsx
 npm run build                  # компиляция в dist/
 npm run typecheck              # проверка типов
-npm test                       # тесты (Vitest)
 ```
 
 </details>
+
+## API
+
+CLI использует [официальный TickTick Open API](https://developer.ticktick.com/docs#/openapi) (6 эндпоинтов: проекты, задачи, создание, завершение, удаление).
 
 ## Требования
 

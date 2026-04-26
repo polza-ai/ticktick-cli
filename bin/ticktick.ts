@@ -7,12 +7,9 @@ import { dirname, join } from 'node:path';
 import { registerInitCommand } from '../src/commands/init.js';
 import { registerTaskCommand, registerTasksCommand } from '../src/commands/tasks.js';
 import { registerCreateCommand } from '../src/commands/create.js';
-import { registerUpdateCommand } from '../src/commands/update.js';
 import { registerCompleteCommand } from '../src/commands/complete.js';
 import { registerDeleteCommand } from '../src/commands/delete.js';
 import { registerProjectCommand, registerProjectsCommand } from '../src/commands/projects.js';
-import { registerTagsCommand } from '../src/commands/tags.js';
-import { registerChecklistCommand } from '../src/commands/checklist.js';
 import { formatError } from '../src/utils/error.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -35,13 +32,10 @@ registerInitCommand(program);
 registerTasksCommand(program);
 registerTaskCommand(program);
 registerCreateCommand(program);
-registerUpdateCommand(program);
 registerCompleteCommand(program);
 registerDeleteCommand(program);
 registerProjectsCommand(program);
 registerProjectCommand(program);
-registerTagsCommand(program);
-registerChecklistCommand(program);
 
 program.hook('postAction', () => {});
 

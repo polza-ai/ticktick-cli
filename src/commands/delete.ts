@@ -24,7 +24,7 @@ export function registerDeleteCommand(program: Command): void {
             console.error('Задача не найдена. Укажите --project <id>.');
             process.exit(3);
           }
-          projectId = found.projectId;
+          projectId = found.task.projectId;
         }
 
         if (!opts.yes && !opts.json) {

@@ -23,7 +23,7 @@ export function registerCompleteCommand(program: Command): void {
             console.error('Задача не найдена. Укажите --project <id>.');
             process.exit(3);
           }
-          projectId = found.projectId;
+          projectId = found.task.projectId;
         }
 
         await client.completeTask(projectId, taskId);

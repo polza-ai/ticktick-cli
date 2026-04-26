@@ -1,7 +1,7 @@
 import Table from 'cli-table3';
 import chalk from 'chalk';
 import dayjs from 'dayjs';
-import type { Task, SubTask, Project, Tag } from '../client/types.js';
+import type { Task, SubTask, Project } from '../client/types.js';
 
 function fmtDate(iso?: string): string {
   if (!iso) return '';
@@ -168,16 +168,7 @@ export function formatProjectDetail(project: Project, tasks: Task[]): string {
   return lines.join('\n');
 }
 
-export function formatTagList(tags: Tag[]): string {
-  if (tags.length === 0) return chalk.gray('Теги не найдены.');
-
-  return tags.map(t => {
-    const color = t.color ? chalk.hex(t.color)('●') : chalk.gray('●');
-    return `  ${color} ${t.name}`;
-  }).join('\n');
-}
-
-export function formatChecklist(items: SubTask[]): string {
+function formatChecklist(items: SubTask[]): string {
   if (items.length === 0) return chalk.gray('  Подзадач нет.');
   return items.map((item, i) => {
     const icon = item.status === 1 ? chalk.green('✓') : chalk.gray('○');
