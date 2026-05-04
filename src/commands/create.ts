@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { loadConfig, createClient } from '../config/config.js';
+import { loadConfig, createClient, resolveProjectId } from '../config/config.js';
 import { handleApiError, validationError } from '../utils/error.js';
 import { jsonOutput } from '../formatters/json.js';
 import { formatTaskDetail } from '../formatters/table.js';
@@ -33,7 +33,10 @@ export function registerCreateCommand(program: Command): void {
     .action(async (opts) => {
       try {
         const config = await loadConfig();
-        const projectId = opts.project ?? config.defaultProject;
+        const projectId =
+          resolveProjectId(opts.project, config)
+          ?? config.defaultProject
+          ?? config.inboxId;
 
         const client = await createClient(config);
         const priority = parsePriority(opts.priority) ?? config.defaultPriority;

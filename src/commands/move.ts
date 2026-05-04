@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
-import { loadConfig, createClient } from '../config/config.js';
+import { loadConfig, createClient, resolveProjectId } from '../config/config.js';
 import { handleApiError, notFoundError } from '../utils/error.js';
 import { jsonOutput } from '../formatters/json.js';
 
@@ -19,9 +19,10 @@ export function registerMoveCommand(program: Command): void {
 
         const spinner = opts.json ? null : ora('Перемещение задачи...').start();
 
-        let fromProjectId: string = opts.from;
+        let fromProjectId: string | undefined = resolveProjectId(opts.from, config) ?? opts.from;
+        const toProjectId = resolveProjectId(opts.to, config) ?? opts.to;
         if (!fromProjectId) {
-          const found = await client.findTaskById(taskId);
+          const found = await client.findTaskById(taskId, config.inboxId);
           if (!found) {
             spinner?.stop();
             throw notFoundError('Задача', taskId);
@@ -34,7 +35,7 @@ export function registerMoveCommand(program: Command): void {
 
         const result = await client.moveTasks([{
           fromProjectId,
-          toProjectId: opts.to,
+          toProjectId,
           taskId,
         }]);
 
@@ -43,7 +44,7 @@ export function registerMoveCommand(program: Command): void {
         if (opts.json) {
           process.stdout.write(jsonOutput(result) + '\n');
         } else {
-          console.log(chalk.green(`\n→ Задача ${taskId} перемещена в проект ${opts.to}.\n`));
+          console.log(chalk.green(`\n→ Задача ${taskId} перемещена в проект ${toProjectId}.\n`));
         }
       } catch (error) {
         handleApiError(error);

@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import ora from 'ora';
-import { loadConfig, createClient } from '../config/config.js';
+import { loadConfig, createClient, resolveProjectId } from '../config/config.js';
 import { handleApiError, notFoundError } from '../utils/error.js';
 import { jsonOutput } from '../formatters/json.js';
 import { formatTaskDetail } from '../formatters/table.js';
@@ -30,9 +30,9 @@ export function registerUpdateCommand(program: Command): void {
 
         const spinner = opts.json ? null : ora('Обновление задачи...').start();
 
-        let projectId: string = opts.project;
+        let projectId: string | undefined = resolveProjectId(opts.project, config) ?? opts.project;
         if (!projectId) {
-          const found = await client.findTaskById(taskId);
+          const found = await client.findTaskById(taskId, config.inboxId);
           if (!found) {
             spinner?.stop();
             throw notFoundError('Задача', taskId);
@@ -40,7 +40,7 @@ export function registerUpdateCommand(program: Command): void {
           projectId = found.task.projectId;
         }
 
-        const params: UpdateTaskParams = { id: taskId, projectId };
+        const params: UpdateTaskParams = { id: taskId, projectId: projectId! };
         if (opts.title !== undefined) params.title = opts.title;
         if (opts.content !== undefined) params.content = opts.content;
         if (opts.desc !== undefined) params.desc = opts.desc;

@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import ora from 'ora';
-import { loadConfig, createClient } from '../config/config.js';
-import { handleApiError } from '../utils/error.js';
+import { loadConfig, createClient, resolveProjectId } from '../config/config.js';
+import { handleApiError, inboxListingUnavailable } from '../utils/error.js';
 import { jsonOutput } from '../formatters/json.js';
 import { formatProjectList, formatProjectDetail } from '../formatters/table.js';
 
@@ -16,7 +16,13 @@ export function registerProjectsCommand(program: Command): void {
         const client = await createClient(config);
 
         const spinner = opts.json ? null : ora('Загрузка проектов...').start();
-        const projects = await client.getProjects();
+        const apiProjects = await client.getProjects();
+        const projects = config.inboxId
+          ? [
+              { id: config.inboxId, name: 'Inbox', kind: 'INBOX', viewMode: 'list' },
+              ...apiProjects,
+            ]
+          : apiProjects;
         spinner?.stop();
 
         if (opts.json) {
@@ -39,10 +45,16 @@ export function registerProjectCommand(program: Command): void {
     .action(async (projectId, opts) => {
       try {
         const config = await loadConfig();
+        const resolvedId = resolveProjectId(projectId, config) ?? projectId;
+
+        if (resolvedId === config.inboxId) {
+          throw inboxListingUnavailable();
+        }
+
         const client = await createClient(config);
 
         const spinner = opts.json ? null : ora('Загрузка проекта...').start();
-        const data = await client.getProjectData(projectId);
+        const data = await client.getProjectData(resolvedId);
         spinner?.stop();
 
         const tasks = data.tasks ?? [];

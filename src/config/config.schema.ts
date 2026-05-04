@@ -7,6 +7,7 @@ export const globalConfigSchema = z.object({
   refreshToken: z.string().optional(),
   tokenExpiresAt: z.string().optional(),
   defaultProject: z.string().optional(),
+  inboxId: z.string().optional(),
   apiBaseUrl: z.string().url().default('https://api.ticktick.com/open/v1'),
 });
 
@@ -27,6 +28,7 @@ export interface ResolvedConfig {
   tokenExpiresAt?: string;
   apiBaseUrl: string;
   defaultProject?: string;
+  inboxId?: string;
   defaultTags?: string[];
   defaultPriority?: number;
 }

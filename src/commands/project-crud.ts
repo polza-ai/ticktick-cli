@@ -1,8 +1,8 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
-import { loadConfig, createClient } from '../config/config.js';
-import { handleApiError } from '../utils/error.js';
+import { loadConfig, createClient, resolveProjectId } from '../config/config.js';
+import { handleApiError, validationError } from '../utils/error.js';
 import { jsonOutput } from '../formatters/json.js';
 import { formatProjectDetail } from '../formatters/table.js';
 import type { CreateProjectParams, UpdateProjectParams } from '../client/types.js';
@@ -72,6 +72,10 @@ export function registerProjectUpdateCommand(program: Command): void {
     .action(async (projectId, opts) => {
       try {
         const config = await loadConfig();
+        const resolvedId = resolveProjectId(projectId, config) ?? projectId;
+        if (resolvedId === config.inboxId) {
+          throw validationError('Inbox нельзя изменить.');
+        }
         const client = await createClient(config);
 
         const params: UpdateProjectParams = {};
@@ -83,7 +87,7 @@ export function registerProjectUpdateCommand(program: Command): void {
         if (kind) params.kind = kind;
 
         const spinner = opts.json ? null : ora('Обновление проекта...').start();
-        const project = await client.updateProject(projectId, params);
+        const project = await client.updateProject(resolvedId, params);
         spinner?.stop();
 
         if (opts.json) {
@@ -106,12 +110,16 @@ export function registerProjectDeleteCommand(program: Command): void {
     .action(async (projectId, opts) => {
       try {
         const config = await loadConfig();
+        const resolvedId = resolveProjectId(projectId, config) ?? projectId;
+        if (resolvedId === config.inboxId) {
+          throw validationError('Inbox нельзя удалить.');
+        }
         const client = await createClient(config);
 
         if (!opts.yes && !opts.json) {
           const { createInterface } = await import('node:readline/promises');
           const rl = createInterface({ input: process.stdin, output: process.stdout });
-          const answer = await rl.question(`Удалить проект ${projectId}? Все его задачи будут удалены. (y/N): `);
+          const answer = await rl.question(`Удалить проект ${resolvedId}? Все его задачи будут удалены. (y/N): `);
           rl.close();
           if (answer.toLowerCase() !== 'y') {
             console.log('Отменено.');
@@ -119,12 +127,12 @@ export function registerProjectDeleteCommand(program: Command): void {
           }
         }
 
-        await client.deleteProject(projectId);
+        await client.deleteProject(resolvedId);
 
         if (opts.json) {
-          process.stdout.write(jsonOutput({ projectId, deleted: true }) + '\n');
+          process.stdout.write(jsonOutput({ projectId: resolvedId, deleted: true }) + '\n');
         } else {
-          console.log(chalk.red(`\n✗ Проект ${projectId} удалён.\n`));
+          console.log(chalk.red(`\n✗ Проект ${resolvedId} удалён.\n`));
         }
       } catch (error) {
         handleApiError(error);

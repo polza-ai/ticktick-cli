@@ -217,7 +217,10 @@ export class TickTickClient {
     return { tasks: allTasks, projects };
   }
 
-  async findTaskById(taskId: string): Promise<{ task: Task; project: Project } | null> {
+  async findTaskById(
+    taskId: string,
+    inboxId?: string,
+  ): Promise<{ task: Task; project: Project } | null> {
     const projects = await this.getProjects();
 
     for (const project of projects) {
@@ -230,6 +233,33 @@ export class TickTickClient {
       }
     }
 
+    if (inboxId) {
+      try {
+        const task = await this.getTask(inboxId, taskId);
+        return {
+          task,
+          project: { id: inboxId, name: 'Inbox', kind: 'INBOX' },
+        };
+      } catch {
+        // not in inbox either
+      }
+    }
+
     return null;
+  }
+
+  // Зонд для определения inboxId: создаёт временную задачу без projectId,
+  // читает projectId из ответа (это inbox<userId>), удаляет.
+  async detectInboxId(): Promise<string> {
+    const probe = await this.createTask({ title: 'Inbox detect (auto-cleanup)' });
+    if (!probe?.id || !probe?.projectId) {
+      throw new Error('detectInboxId: пустой ответ /open/v1/task');
+    }
+    try {
+      await this.deleteTask(probe.projectId, probe.id);
+    } catch {
+      // best effort: задача может остаться в Inbox
+    }
+    return probe.projectId;
   }
 }

@@ -92,6 +92,7 @@ export function registerInitCommand(program: Command): void {
         const client = new TickTickClient({ accessToken: tokenResp.access_token });
 
         let defaultProject = '';
+        let inboxId = '';
 
         try {
           const projects = await client.getProjects();
@@ -127,6 +128,18 @@ export function registerInitCommand(program: Command): void {
           console.log('');
         }
 
+        // Detect inboxId via probe (POST /task без projectId → читаем projectId → DELETE)
+        try {
+          inboxId = await client.detectInboxId();
+          console.log(`  ✅ Inbox: ${inboxId}`);
+          console.log('');
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.log('  ⚠️  Не удалось определить Inbox. Алиас "--project inbox" работать не будет.');
+          console.log(`     ${msg}`);
+          console.log('');
+        }
+
         // Save
         const expiresAt = tokenResp.expires_in
           ? new Date(Date.now() + tokenResp.expires_in * 1000).toISOString()
@@ -139,6 +152,7 @@ export function registerInitCommand(program: Command): void {
           ...(tokenResp.refresh_token && { refreshToken: tokenResp.refresh_token }),
           ...(expiresAt && { tokenExpiresAt: expiresAt }),
           ...(defaultProject && { defaultProject }),
+          ...(inboxId && { inboxId }),
           apiBaseUrl: 'https://api.ticktick.com/open/v1',
         };
 

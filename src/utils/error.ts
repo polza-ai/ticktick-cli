@@ -19,6 +19,14 @@ export function validationError(message: string): TickTickCliError {
   return new TickTickCliError(message, 'VALIDATION_ERROR', 4);
 }
 
+export function inboxListingUnavailable(): TickTickCliError {
+  return new TickTickCliError(
+    'Получить список задач Inbox через TickTick OpenAPI невозможно — этот эндпоинт недоступен по Bearer-токену. Используйте "ticktick task <id>" для прямого доступа к Inbox-задаче.',
+    'INBOX_LISTING_UNAVAILABLE',
+    5,
+  );
+}
+
 export function handleApiError(error: unknown): never {
   if (error instanceof TickTickCliError) throw error;
 

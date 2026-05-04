@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import ora from 'ora';
-import { loadConfig, createClient } from '../config/config.js';
+import { loadConfig, createClient, resolveProjectId } from '../config/config.js';
 import { handleApiError } from '../utils/error.js';
 import { jsonOutput } from '../formatters/json.js';
 import { formatTaskList } from '../formatters/table.js';
@@ -23,7 +23,11 @@ export function registerCompletedCommand(program: Command): void {
         const spinner = opts.json ? null : ora('Загрузка завершённых задач...').start();
 
         const params: CompletedTasksParams = {};
-        if (opts.project?.length) params.projectIds = opts.project;
+        if (opts.project?.length) {
+          params.projectIds = (opts.project as string[]).map(
+            (id) => resolveProjectId(id, config) ?? id,
+          );
+        }
         if (opts.from) params.startDate = opts.from;
         if (opts.to) params.endDate = opts.to;
 

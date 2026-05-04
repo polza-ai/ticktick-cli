@@ -77,6 +77,20 @@ CLI откроет браузер — нажмите «Разрешить», и 
 { "ok": false, "error": { "code": "NOT_FOUND", "message": "Не найдено" } }
 ```
 
+## Inbox
+
+`ticktick init` определяет ID Inbox (через одноразовый зонд: создать-прочитать-удалить задачу) и сохраняет его как `inboxId` в `~/.ticktick-cli/config.json`. После этого:
+
+- `ticktick projects` показывает Inbox синтетическим элементом с `kind: "INBOX"`.
+- `--project inbox` (case-insensitive) — алиас на `inboxId` в любых командах.
+- `ticktick create` без `--project` явно проставляет `projectId: <inboxId>`.
+- `ticktick task <id>` / `update` / `complete` / `delete` без `--project` сами найдут задачу в Inbox.
+
+**Ограничения OpenAPI:**
+
+- **Листинг Inbox-задач невозможен.** Ни `/project/{inboxId}/data`, ни `/task/filter` его не отдают, а `/api/v2/batch/check/0` требует session-cookie веб-клиента, которой нет у OAuth Bearer. `ticktick tasks --project inbox` возвращает явную ошибку `INBOX_LISTING_UNAVAILABLE` — работайте с Inbox-задачами по их ID через `ticktick task <id>`.
+- **DELETE 200 не значит "удалено сразу".** `ticktick delete` возвращает `ok:true`, и задача пропадает из listings, но прямой `ticktick task <id>` сразу после может отдать stale-копию из кэша API. Это поведение TickTick OpenAPI, а не CLI.
+
 ## Конфигурация
 
 ### Глобальный конфиг
@@ -117,7 +131,7 @@ ticktick tasks [опции]
 
 | Флаг | Описание |
 |------|----------|
-| `--project <id>` | Фильтр по проекту |
+| `--project <id>` | Фильтр по проекту (или алиас `inbox` — вернёт `INBOX_LISTING_UNAVAILABLE`) |
 | `--priority <n>` | Фильтр по приоритету (0, 1, 3, 5) |
 | `--tag <tag>` | Фильтр по тегу |
 | `--completed` | Включить завершённые задачи |
@@ -143,7 +157,7 @@ ticktick create -t "Название" [опции]
 |------|----------|
 | `-t, --title <text>` | Название задачи **(обязательно)** |
 | `--content <text>` | Описание |
-| `--project <id>` | Проект |
+| `--project <id>` | Проект (или алиас `inbox`) |
 | `-p, --priority <n>` | Приоритет: `0` (нет), `1` (низкий), `3` (средний), `5` (высокий) |
 | `--due <date>` | Дедлайн (YYYY-MM-DD или ISO 8601) |
 | `--start <date>` | Дата начала (YYYY-MM-DD или ISO 8601) |
@@ -165,7 +179,7 @@ ticktick update <taskId> [опции]
 
 | Флаг | Описание |
 |------|----------|
-| `--project <id>` | ID проекта (если не указан — найдётся автоматически) |
+| `--project <id>` | ID проекта или алиас `inbox` (если не указан — найдётся автоматически, включая Inbox) |
 | `-t, --title <text>` | Новое название |
 | `--content <text>` | Описание |
 | `-p, --priority <n>` | Приоритет (0, 1, 3, 5) |
@@ -182,6 +196,8 @@ ticktick update <taskId> [опции]
 ```
 ticktick move <taskId> --to <projectId> [--from <projectId>] [--json]
 ```
+
+`--to` и `--from` принимают алиас `inbox`.
 
 ### completed
 
@@ -247,7 +263,7 @@ ticktick delete <taskId> [--project <id>] [-y] [--json]
 
 | Флаг | Описание |
 |------|----------|
-| `--project <id>` | ID проекта |
+| `--project <id>` | ID проекта или алиас `inbox` |
 | `-y, --yes` | Без подтверждения |
 | `--json` | JSON-вывод |
 

@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import ora from 'ora';
-import { loadConfig, createClient } from '../config/config.js';
-import { handleApiError, notFoundError, TickTickCliError } from '../utils/error.js';
+import { loadConfig, createClient, resolveProjectId } from '../config/config.js';
+import { handleApiError, notFoundError, inboxListingUnavailable, TickTickCliError } from '../utils/error.js';
 import { jsonOutput } from '../formatters/json.js';
 import { formatTaskList, formatTaskDetail } from '../formatters/table.js';
 
@@ -26,8 +26,14 @@ export function registerTasksCommand(program: Command): void {
         let tasks;
         let projects;
 
-        if (opts.project) {
-          const data = await client.getProjectData(opts.project);
+        const projectFilter = resolveProjectId(opts.project, config) ?? opts.project;
+        if (projectFilter && projectFilter === config.inboxId) {
+          spinner?.stop();
+          throw inboxListingUnavailable();
+        }
+
+        if (projectFilter) {
+          const data = await client.getProjectData(projectFilter);
           tasks = data.tasks ?? [];
           projects = [data.project];
         } else {
@@ -78,6 +84,9 @@ export function registerTasksCommand(program: Command): void {
         } else {
           console.log(formatTaskList(tasks, projects));
           console.log(`\nВсего: ${tasks.length} задач`);
+          if (!projectFilter && config.inboxId) {
+            console.log('\nПримечание: задачи Inbox не отдаются OpenAPI списком. Используйте "ticktick task <id>" для прямого доступа.');
+          }
         }
       } catch (error) {
         handleApiError(error);
@@ -101,17 +110,23 @@ export function registerTaskCommand(program: Command): void {
         let task;
         let projectName: string | undefined;
 
-        if (opts.project) {
+        const projectArg = resolveProjectId(opts.project, config) ?? opts.project;
+
+        if (projectArg) {
           try {
-            task = await client.getTask(opts.project, taskId);
-            try {
-              const project = await client.getProject(opts.project);
-              projectName = project.name;
-            } catch { /* best effort */ }
+            task = await client.getTask(projectArg, taskId);
+            if (projectArg === config.inboxId) {
+              projectName = 'Inbox';
+            } else {
+              try {
+                const project = await client.getProject(projectArg);
+                projectName = project.name;
+              } catch { /* best effort */ }
+            }
           } catch (err) {
             // shared-проекты иногда отдают пустое тело по прямому GET — fallback на полный поиск
             if (err instanceof TickTickCliError && err.code === 'NOT_FOUND') {
-              const found = await client.findTaskById(taskId);
+              const found = await client.findTaskById(taskId, config.inboxId);
               if (!found) {
                 spinner?.stop();
                 throw notFoundError('Задача', taskId);
@@ -123,7 +138,7 @@ export function registerTaskCommand(program: Command): void {
             }
           }
         } else {
-          const found = await client.findTaskById(taskId);
+          const found = await client.findTaskById(taskId, config.inboxId);
           if (!found) {
             spinner?.stop();
             throw notFoundError('Задача', taskId);

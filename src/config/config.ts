@@ -59,9 +59,19 @@ export async function loadConfig(): Promise<ResolvedConfig> {
     tokenExpiresAt: global.tokenExpiresAt,
     apiBaseUrl: global.apiBaseUrl,
     defaultProject: project?.defaultProject ?? global.defaultProject,
+    inboxId: global.inboxId,
     defaultTags: project?.defaultTags,
     defaultPriority: project?.defaultPriority,
   };
+}
+
+export function resolveProjectId(
+  value: string | undefined,
+  config: Pick<ResolvedConfig, 'inboxId'>,
+): string | undefined {
+  if (value === undefined) return undefined;
+  if (value.toLowerCase() === 'inbox') return config.inboxId;
+  return value;
 }
 
 export async function saveGlobalConfig(config: GlobalConfig): Promise<void> {

@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { loadConfig, createClient } from '../config/config.js';
+import { loadConfig, createClient, resolveProjectId } from '../config/config.js';
 import { handleApiError, notFoundError } from '../utils/error.js';
 import { jsonOutput } from '../formatters/json.js';
 
@@ -15,10 +15,10 @@ export function registerCompleteCommand(program: Command): void {
         const config = await loadConfig();
         const client = await createClient(config);
 
-        let projectId = opts.project;
+        let projectId = resolveProjectId(opts.project, config) ?? opts.project;
 
         if (!projectId) {
-          const found = await client.findTaskById(taskId);
+          const found = await client.findTaskById(taskId, config.inboxId);
           if (!found) {
             throw notFoundError('Задача', taskId);
           }
