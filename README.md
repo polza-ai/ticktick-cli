@@ -145,9 +145,16 @@ ticktick create -t "Название" [опции]
 | `--content <text>` | Описание |
 | `--project <id>` | Проект |
 | `-p, --priority <n>` | Приоритет: `0` (нет), `1` (низкий), `3` (средний), `5` (высокий) |
-| `--due <date>` | Дедлайн (YYYY-MM-DD) |
+| `--due <date>` | Дедлайн (YYYY-MM-DD или ISO 8601) |
+| `--start <date>` | Дата начала (YYYY-MM-DD или ISO 8601) |
+| `--duration <dur>` | Длительность: `30m`, `1h`, `1h30m`, `1.5h`, `90` (минуты). Считает `dueDate` от `--start` (или `now`). Несовместимо с `--due` |
+| `--all-day` | Без времени (весь день) |
+| `--timezone <tz>` | Часовой пояс (например, `Europe/Moscow`) |
+| `--repeat <rrule>` | Правило повторения (RRULE) |
 | `--tag <tags...>` | Теги |
 | `--json` | JSON-вывод |
+
+> В Open API нет отдельного поля `duration` — длительность задаётся парой `startDate` + `dueDate`. Флаг `--duration` — удобный шорткат, который вычисляет `dueDate`.
 
 ### update
 
