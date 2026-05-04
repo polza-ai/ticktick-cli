@@ -4,7 +4,7 @@ import { loadConfig, createClient } from '../config/config.js';
 import { handleApiError, notFoundError } from '../utils/error.js';
 import { jsonOutput } from '../formatters/json.js';
 import { formatTaskDetail } from '../formatters/table.js';
-import { parsePriority, normalizeDueDate } from '../utils/validate.js';
+import { parsePriority, normalizeDueDate, parseSortOrder } from '../utils/validate.js';
 import type { UpdateTaskParams } from '../client/types.js';
 
 export function registerUpdateCommand(program: Command): void {
@@ -21,6 +21,7 @@ export function registerUpdateCommand(program: Command): void {
     .option('--all-day', 'Без времени (весь день)')
     .option('--timezone <tz>', 'Часовой пояс (например, Europe/Moscow)')
     .option('--repeat <rrule>', 'Правило повторения (RRULE)')
+    .option('--sort-order <n>', 'Порядок сортировки (целое число; меньше = выше в списке)')
     .option('--json', 'Вывод в JSON')
     .action(async (taskId, opts) => {
       try {
@@ -52,6 +53,8 @@ export function registerUpdateCommand(program: Command): void {
         if (opts.allDay) params.isAllDay = true;
         if (opts.timezone !== undefined) params.timeZone = opts.timezone;
         if (opts.repeat !== undefined) params.repeatFlag = opts.repeat;
+        const sortOrder = parseSortOrder(opts.sortOrder);
+        if (sortOrder !== undefined) params.sortOrder = sortOrder;
 
         const task = await client.updateTask(taskId, params);
 

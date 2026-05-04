@@ -14,7 +14,7 @@ export function registerTasksCommand(program: Command): void {
     .option('--tag <tag>', 'Фильтр по тегу')
     .option('--completed', 'Показать завершённые')
     .option('-l, --limit <n>', 'Лимит задач', '50')
-    .option('--sort <field>', 'Сортировка (priority, dueDate, title)', 'priority')
+    .option('--sort <field>', 'Сортировка (priority, dueDate, title, sortOrder)', 'priority')
     .option('--json', 'Вывод в JSON')
     .action(async (opts) => {
       try {
@@ -63,6 +63,8 @@ export function registerTasksCommand(program: Command): void {
           });
         } else if (opts.sort === 'title') {
           tasks.sort((a, b) => a.title.localeCompare(b.title));
+        } else if (opts.sort === 'sortOrder') {
+          tasks.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
         }
 
         // Limit

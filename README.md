@@ -122,7 +122,7 @@ ticktick tasks [опции]
 | `--tag <tag>` | Фильтр по тегу |
 | `--completed` | Включить завершённые задачи |
 | `-l, --limit <n>` | Максимум задач (по умолчанию: 50) |
-| `--sort <field>` | Сортировка: `priority`, `dueDate`, `title` |
+| `--sort <field>` | Сортировка: `priority`, `dueDate`, `title`, `sortOrder` |
 | `--json` | JSON-вывод |
 
 ### task
@@ -151,6 +151,7 @@ ticktick create -t "Название" [опции]
 | `--all-day` | Без времени (весь день) |
 | `--timezone <tz>` | Часовой пояс (например, `Europe/Moscow`) |
 | `--repeat <rrule>` | Правило повторения (RRULE) |
+| `--sort-order <n>` | Порядок сортировки (целое число; меньше = выше в списке) |
 | `--tag <tags...>` | Теги |
 | `--json` | JSON-вывод |
 
@@ -173,6 +174,7 @@ ticktick update <taskId> [опции]
 | `--all-day` | Без времени |
 | `--timezone <tz>` | Часовой пояс |
 | `--repeat <rrule>` | Правило повторения |
+| `--sort-order <n>` | Порядок сортировки (целое число; меньше = выше в списке) |
 | `--json` | JSON-вывод |
 
 ### move

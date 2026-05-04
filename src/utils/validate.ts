@@ -62,6 +62,15 @@ export function parseDuration(value: string | undefined): number | undefined {
   return total;
 }
 
+export function parseSortOrder(value: string | undefined): number | undefined {
+  if (value === undefined) return undefined;
+  const n = Number(value);
+  if (!Number.isInteger(n) || !Number.isSafeInteger(n)) {
+    throw validationError(`Невалидный sortOrder: ${value}. Ожидается целое число.`);
+  }
+  return n;
+}
+
 export function parseStamp(value: string | undefined): number | undefined {
   if (value === undefined) return undefined;
   if (!/^\d{8}$/.test(value)) {

@@ -7,6 +7,7 @@ import {
   parsePriority,
   normalizeDueDate,
   parseDuration,
+  parseSortOrder,
   addMinutesToIso,
   nowIso,
 } from '../utils/validate.js';
@@ -26,6 +27,7 @@ export function registerCreateCommand(program: Command): void {
     .option('--all-day', 'Без времени (весь день)')
     .option('--timezone <tz>', 'Часовой пояс (например, Europe/Moscow)')
     .option('--repeat <rrule>', 'Правило повторения (RRULE)')
+    .option('--sort-order <n>', 'Порядок сортировки (целое число; меньше = выше в списке)')
     .option('--tag <tags...>', 'Теги')
     .option('--json', 'Вывод в JSON')
     .action(async (opts) => {
@@ -62,6 +64,8 @@ export function registerCreateCommand(program: Command): void {
         if (opts.allDay) params.isAllDay = true;
         if (opts.timezone !== undefined) params.timeZone = opts.timezone;
         if (opts.repeat !== undefined) params.repeatFlag = opts.repeat;
+        const sortOrder = parseSortOrder(opts.sortOrder);
+        if (sortOrder !== undefined) params.sortOrder = sortOrder;
 
         const task = await client.createTask(params);
 
